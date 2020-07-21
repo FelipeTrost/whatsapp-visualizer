@@ -5,11 +5,14 @@ let selectedUsers = null;
 const localStorageKey = "saved-messages"
 const savedList = document.querySelectorAll("div#input-options ul")[0]
 
+const messagesPerPage = 100;
+
+let offset = 0;
+let messages = [];
+let users = {};
+let selectedUser = null;
 
 const extractMessages = data => {
-    const users = {};
-    const messages = []
-
     const lines = data.split("\n");
 
     for (let i = 0; i < lines.length; i++) {
@@ -35,46 +38,54 @@ const extractMessages = data => {
         // Message
         const message = tempLine.substr(colIndex + 2)
 
-        messages.push({
+        messages[i] = {
             username,
             message,
             date
-        })
-    }
-
-    // saveMessages(users, messages);
-    showMessages(users, messages);
-    populateSavedLists();
-}
-
-const showMessages = (users, messages, DesiredselectedUser = null) => {
-    // Clear page
-    window.scrollTo(0, 0)
-
-    while (output.firstChild) {
-        output.removeChild(output.firstChild);
-    }
-
-    // Select user
-    const availableUsers = Object.keys(users).filter(username => username != "");
-
-    let selectedUser = null;
-    while (!selectedUser) {
-        const answer = parseInt(window.prompt(
-            `Which user would you like to select?\n${
-                availableUsers.map((username, i)=> `${i+1} - ${username}`).join("\n")
-            }`
-        ))
-
-
-        if (answer > 0 && answer <= availableUsers.length) {
-            selectedUser = availableUsers[answer - 1]
         }
     }
 
-    let lastUser = null;
+    try {
+        saveMessages(users, messages);
+    } catch (error) {
+        alert("Couldn't store messages, probably because the file is to big")
+    }
+}
 
-    for (let i in messages) {
+const showMessages = (users, messages, offset) => {
+    // Clear page 
+    if (offset == 0) {
+        window.scrollTo(0, 0)
+
+        while (output.firstChild) {
+            output.removeChild(output.firstChild);
+        }
+    }
+
+    // Select user
+    if (!selectedUser) {
+        const availableUsers = Object.keys(users).filter(username => username != "");
+
+        while (!selectedUser) {
+            const answer = parseInt(window.prompt(
+                `Which user would you like to select?\n${
+                availableUsers.map((username, i)=> `${i+1} - ${username}`).join("\n")
+            }`
+            ))
+
+
+            if (answer > 0 && answer <= availableUsers.length) {
+                selectedUser = availableUsers[answer - 1]
+            }
+        }
+    }
+
+
+    // Show users
+    let lastUser = null;
+    const limit = offset + messagesPerPage < messages.length ? offset + messagesPerPage : messages.length;
+
+    for (let i = offset; i < limit; i++) {
         const message = messages[i];
 
         const msg = document.createElement("div");
@@ -121,22 +132,41 @@ input.addEventListener('change', function () {
     const fileReader = new FileReader();
 
     fileReader.onload = () => {
+        offset = 0;
+        messages = [];
+        users = [];
+        selectedUser = null;
+
         extractMessages(fileReader.result);
-        console.log(fileReader)
+        populateSavedLists();
+        showMessages(users, messages, offset);
     }
 
     fileReader.readAsText(this.files[0]);
 })
 
 savedList.addEventListener("click", e => {
+    // Get conversation
     const id = e.target.id
     const saved = JSON.parse(localStorage.getItem(localStorageKey));
 
     const conversation = saved.find(conversation => conversation.id == id);
 
-    console.log(conversation)
+    // Reset variables
+    offset = 0;
+    messages = conversation.messages;
+    users = conversation.users;
+    selectedUser = null;
 
-    showMessages(conversation.users, conversation.messages);
+    showMessages(conversation.users, conversation.messages, offset);
 })
+
+window.onscroll = () => {
+    if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 50) {
+        console.log("Bottom");
+        offset += messagesPerPage
+        showMessages(users, messages, offset);
+    }
+};
 
 populateSavedLists()
