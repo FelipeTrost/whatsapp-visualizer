@@ -2,7 +2,6 @@ const input = document.getElementById('inputfile');
 const output = document.getElementById('output');
 let selectedUsers = null;
 
-const localStorageKey = "saved-messages"
 const savedList = document.querySelectorAll("div#input-options ul")[0]
 
 const messagesPerPage = 100;
@@ -46,9 +45,17 @@ const extractMessages = data => {
     }
 
     try {
-        saveMessages(users, messages);
+        // saveMessages(users, messages);
+        // localStorage.setItem(localStorageKey, JSON.stringify(saved));
+        add({
+            title: `Conversation between ${Object.keys(users).join(" - ")}`,
+            messages,
+            users
+        });
+
     } catch (error) {
         alert("Couldn't store messages, probably because the file is to big")
+        console.error(error);
     }
 }
 
@@ -109,23 +116,25 @@ const showMessages = (users, messages, offset) => {
     }
 }
 
-const populateSavedLists = () => {
+const populateSavedLists = async () => {
     while (savedList.firstChild) {
         savedList.removeChild(savedList.firstChild);
     }
 
-    const saved = JSON.parse(localStorage.getItem(localStorageKey));
+    const saved = await readAll();
 
-    if (!saved || !saved instanceof Array) return;
+    if (!saved || !saved instanceof Array || saved.length == 0) return;
 
-    saved.forEach(conversation => {
+    for (let i = 0; i < saved.length; i++) {
+        const conversation = saved[i];
+
         const li = document.createElement("li");
 
         li.innerText = conversation.title;
-        li.id = conversation.id;
+        li.id = i + 1;
 
         savedList.appendChild(li)
-    });
+    }
 }
 
 input.addEventListener('change', function () {
@@ -140,17 +149,18 @@ input.addEventListener('change', function () {
         extractMessages(fileReader.result);
         populateSavedLists();
         showMessages(users, messages, offset);
+        closeNav();
     }
 
     fileReader.readAsText(this.files[0]);
 })
 
-savedList.addEventListener("click", e => {
+savedList.addEventListener("click", async e => {
     // Get conversation
     const id = e.target.id
-    const saved = JSON.parse(localStorage.getItem(localStorageKey));
+    const conversation = await read(+id);
 
-    const conversation = saved.find(conversation => conversation.id == id);
+    console.log(conversation)
 
     // Reset variables
     offset = 0;
@@ -159,6 +169,7 @@ savedList.addEventListener("click", e => {
     selectedUser = null;
 
     showMessages(conversation.users, conversation.messages, offset);
+    closeNav();
 })
 
 window.onscroll = () => {
