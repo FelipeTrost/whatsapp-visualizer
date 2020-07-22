@@ -64,6 +64,8 @@ nav img {
 
     max-width: 700px;
     margin: auto;
+
+    overflow-wrap: break-word;
 }
 
 #output div {
