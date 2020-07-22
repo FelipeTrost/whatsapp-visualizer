@@ -4,6 +4,10 @@
     font-family: Arial, Helvetica, sans-serif;
 }
 
+body {
+    background-color: #4cb7e9;
+}
+
 /*  NAV */
 
 nav {
@@ -30,7 +34,10 @@ nav img {
     display: flex;
     flex-direction: column;
     padding: 20px;
-    display: none;
+}
+
+.sidenav #close {
+    cursor: pointer;
 }
 
 /*  INPUT OPTIONS */
@@ -70,6 +77,7 @@ nav img {
 
 #output div.user {
     align-self: flex-start;
+    background-color: #DCEDC8;
 }
 
 #output div b {
