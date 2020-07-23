@@ -1,15 +1,20 @@
+// ------------------------------------------------------------------------------------------------------------------------
+// DOM ELEMENTS
 const input = document.getElementById('inputfile');
 const output = document.getElementById('output');
-let selectedUsers = null;
 
 const savedList = document.querySelectorAll("div#input-options ul")[0]
 
+// ------------------------------------------------------------------------------------------------------------------------
+// GLOBAL VARIABLES
 const messagesPerPage = 100;
-
 let offset = 0;
 let messages = [];
 let users = {};
 let selectedUser = null;
+
+// ------------------------------------------------------------------------------------------------------------------------
+// EXTRACT MESSAGES FROM STRING (AND SAVE THEM)
 
 const extractMessages = data => {
     const lines = data.split("\n");
@@ -37,13 +42,16 @@ const extractMessages = data => {
         // Message
         const message = tempLine.substr(colIndex + 2)
 
-        messages[i] = {
-            username,
-            message,
-            date
-        }
+        // In case there was something wrong with the line we simply don't add it
+        if (username && message && date)
+            messages.push({
+                username,
+                message,
+                date
+            })
     }
 
+    // Save messages in db
     try {
         // saveMessages(users, messages);
         // localStorage.setItem(localStorageKey, JSON.stringify(saved));
@@ -59,8 +67,11 @@ const extractMessages = data => {
     }
 }
 
+// ------------------------------------------------------------------------------------------------------------------------
+// MANAGE DOM
+
 const showMessages = (users, messages, offset) => {
-    // Clear page 
+    // Clear page if we are starting to show a new conversation
     if (offset == 0) {
         window.scrollTo(0, 0)
 
@@ -80,13 +91,13 @@ const showMessages = (users, messages, offset) => {
             }`
             ))
 
+            if (!answer) return;
 
             if (answer > 0 && answer <= availableUsers.length) {
                 selectedUser = availableUsers[answer - 1]
             }
         }
     }
-
 
     // Show users
     let lastUser = null;
@@ -98,6 +109,7 @@ const showMessages = (users, messages, offset) => {
         const msg = document.createElement("div");
 
         if (message.username != lastUser) {
+
             const usernameTag = document.createElement("b");
             msg.appendChild(usernameTag);
             usernameTag.innerText = message.username
@@ -137,6 +149,9 @@ const populateSavedLists = async () => {
     }
 }
 
+// ------------------------------------------------------------------------------------------------------------------------
+// HANDLE INPUT / CONVERSATION SELECTION
+
 input.addEventListener('change', function () {
     const fileReader = new FileReader();
 
@@ -172,12 +187,12 @@ savedList.addEventListener("click", async e => {
     closeNav();
 })
 
+// ------------------------------------------------------------------------------------------------------------------------
+// ADD MESSAGES TO THE BOTTOM ONCE THE USERS REACHES IT
+
 window.onscroll = () => {
-    if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 50) {
-        console.log("Bottom");
+    if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 50 && selectedUser) {
         offset += messagesPerPage
         showMessages(users, messages, offset);
     }
 };
-
-populateSavedLists()
