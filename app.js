@@ -51,6 +51,11 @@ const extractMessages = data => {
             })
     }
 
+    if (messages.length === 0 || users.length === 0) {
+        alert("Couldn't extract anything from the file.");
+        return false;
+    }
+
     // Save messages in db
     try {
         // saveMessages(users, messages);
@@ -65,6 +70,8 @@ const extractMessages = data => {
         alert("Couldn't store messages, probably because the file is to big")
         console.error(error);
     }
+
+    return true;
 }
 
 // ------------------------------------------------------------------------------------------------------------------------
@@ -161,10 +168,11 @@ input.addEventListener('change', function () {
         users = [];
         selectedUser = null;
 
-        extractMessages(fileReader.result);
-        populateSavedLists();
-        showMessages(users, messages, offset);
-        closeNav();
+        if (extractMessages(fileReader.result)) {
+            populateSavedLists();
+            showMessages(users, messages, offset);
+            closeNav();
+        }
     }
 
     fileReader.readAsText(this.files[0]);
