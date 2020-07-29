@@ -161,6 +161,8 @@ const showMessages = (users, messages, offset) => {
 
         output.appendChild(msg)
     }
+
+    return true;
 }
 
 const populateSavedLists = async () => {
@@ -219,8 +221,8 @@ savedList.addEventListener("click", async e => {
     users = conversation.users;
     selectedUser = null;
 
-    showMessages(conversation.users, conversation.messages, offset);
-    closeNav();
+    if (showMessages(conversation.users, conversation.messages, offset))
+        closeNav();
 })
 
 // ------------------------------------------------------------------------------------------------------------------------
