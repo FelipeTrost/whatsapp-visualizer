@@ -13,53 +13,81 @@ let messages = [];
 let users = {};
 let selectedUser = null;
 
+const modeAndroid = ".";
+const modeApple = "(.|\n)";
+
 // ------------------------------------------------------------------------------------------------------------------------
 // EXTRACT MESSAGES FROM STRING (AND SAVE THEM)
 
 const extractMessages = data => {
-    const lines = data.split("\n");
+    // Check mode, because texts from apple usually start with a "[", whereas android files don't
+    let mode = modeAndroid;
+    if (data[0] == "[" || data[1] == "[")
+        mode = modeApple;
 
+    const dateRegex = "[0-9]+.[0-9]+.[0-9]+";
+    const regex = RegExp(`\n?(.?${dateRegex}${mode}*)`, "g");
+    const lines = data.match(regex).filter(line => line.length > 20);
+
+    // Exctract messages
     for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
+        let line = lines[i];
+        if (line[0] === "\n") line = line.substr(1);
 
-        // If the line does't start with a date, it's probably not a message
-        if (!line.match(/^[0-9]+[/][0-9]+[/][0-9]+/)) continue;
+        if (mode === modeApple) line = line.replace(/\[|\]/g, "");
 
-        // Get date
-        const slIndex = line.indexOf("-");
-        const dateString = line.substr(0, slIndex - 7);
-        const date = new Date(dateString);
+        let message, username, date;
+        if (mode === modeAndroid) {
+            // Get date
+            const slIndex = line.indexOf("-");
+            const dateString = line.substr(0, slIndex - 7);
+            date = new Date(dateString);
 
-        let tempLine = line.substr(slIndex + 2)
+            line = line.substr(slIndex + 2);
 
-        // Username
-        const colIndex = tempLine.indexOf(":")
-        const username = tempLine.substr(0, colIndex)
+            // Username
+            const colIndex = line.indexOf(":")
+            username = line.substr(0, colIndex)
 
-        // Add username to collection if it doesn't already exist
-        if (!users[username]) users[username] = username
+            // Message
+            message = line.substr(colIndex + 2);
+        } else {
+            // Get date
+            const dateParts = line.substr(0, 8).split("-");
+            const hour = line.substr(9, 8)
 
-        // Message
-        const message = tempLine.substr(colIndex + 2)
+            date = new Date(`${dateParts[1]}/${dateParts[0]}/${dateParts[2]} ${hour}`);
+
+            line = line.substr(18);
+
+            // Username
+            const colIndex = line.indexOf(":");
+            username = line.substr(0, colIndex);
+
+            // Message
+            message = line.substr(colIndex + 2);
+        }
 
         // In case there was something wrong with the line we simply don't add it
-        if (username && message && date)
+        if (username && message && date.valueOf() != NaN) {
             messages.push({
                 username,
                 message,
                 date
             })
+
+            // Add username to collection if it doesn't already exist
+            if (!users[username]) users[username] = username
+        }
     }
 
-    if (messages.length === 0 || users.length === 0) {
+    if (messages.length === 0 || Object.keys(users).length === 0) {
         alert("Couldn't extract anything from the file.");
         return false;
     }
 
     // Save messages in db
     try {
-        // saveMessages(users, messages);
-        // localStorage.setItem(localStorageKey, JSON.stringify(saved));
         add({
             title: `Conversation between ${Object.keys(users).join(" - ")}`,
             messages,
