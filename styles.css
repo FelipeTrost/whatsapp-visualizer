@@ -37,6 +37,7 @@ nav img {
 
     width: 80%;
     max-width: 400px;
+    overflow-y: scroll;
 }
 
 .sidenav #close {
@@ -63,7 +64,7 @@ nav img {
 #output {
     padding-top: 50px;
     display: flex;
-    align-items: flex-end;
+    align-items: flex-start;
     flex-direction: column;
 
     max-width: 700px;
@@ -82,7 +83,7 @@ nav img {
 }
 
 #output div.user {
-    align-self: flex-start;
+    align-self: flex-end;
     background-color: #DCEDC8;
 }
 
