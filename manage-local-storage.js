@@ -54,9 +54,10 @@ const add = object => { // <<--- maybe make this promise based
 }
 
 const read = id => {
-    if (!db) return null;
-
     return new Promise((resolve, reject) => {
+        if (!db)
+            return reject(new Error("DB not initialized"));
+
         const request = db.transaction([objectStoreName])
             .objectStore(objectStoreName)
             .get(id);
@@ -68,9 +69,10 @@ const read = id => {
 }
 
 const readAll = () => {
-    if (!db) return null;
-
     return new Promise((resolve, reject) => {
+        if (!db)
+            return reject(new Error("DB not initialized"));
+
         const objectStore = db.transaction([objectStoreName]).objectStore(objectStoreName);
 
         const request = objectStore.getAll();
