@@ -86,20 +86,24 @@ const extractMessages = data => {
         return false;
     }
 
-    // Save messages in db
+    return true;
+}
+
+const saveMessages = filename => {
     try {
         add({
-            title: `Conversation between ${Object.keys(users).join(" - ")}`,
+            title: `${filename} with ${Object.keys(users).join(" - ")}`,
             messages,
             users
         });
 
+        return true;
     } catch (error) {
         alert("Couldn't store messages, probably because the file is to big")
         console.error(error);
-    }
 
-    return true;
+        return false;
+    }
 }
 
 // ------------------------------------------------------------------------------------------------------------------------
@@ -193,12 +197,15 @@ input.addEventListener('change', function () {
     const fileReader = new FileReader();
 
     fileReader.onload = () => {
+        const filename = input.value.split("\\").pop();
+
+        console.log(filename);
         offset = 0;
         messages = [];
         users = [];
         selectedUser = null;
 
-        if (extractMessages(fileReader.result)) {
+        if (extractMessages(fileReader.result) && saveMessages(filename)) {
             populateSavedLists();
             showMessages(users, messages, offset);
             closeNav();
